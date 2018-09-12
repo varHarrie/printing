@@ -25,7 +25,9 @@ const options = {
   // modify DOM before print
   beforePrint (el, index) {},
   // paper direction, default is 'vertical'
-  direction: 'vertical'
+  direction: 'vertical',
+  // scan and apply specified styles, default is true (all styles)
+  scanStyles: true,
 }
 
 // preview without print (for debug)
@@ -45,11 +47,12 @@ print(target, options).then(() => {
 interface Options {
   beforePrint?: (el: HTMLElement, index: number) => void
   direction?: 'vertical' | 'horizontal'
+  scanStyles?: boolean | string[] | 'common'
 }
 
 function print (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>
 
-function preview (source: HTMLElement | HTMLElement[], options: Options = {}): void
+function preview (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>
 ```
 
 - DOM attributes:
@@ -69,9 +72,3 @@ function preview (source: HTMLElement | HTMLElement[], options: Options = {}): v
 ## Notes
 
 - All style with percentage (such as `width: 100%`) will be invalid while printing (due to `getComputedStyle`), and you can use `data-print-style` to fix it.
-
-## Changelogs
-
-- v1.0.0 2018-09-12
-
-  - First blood

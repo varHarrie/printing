@@ -23,7 +23,9 @@ const options = {
   // 在打印之前修改DOM
   beforePrint (el, index) {},
   // 纸张方向，默认是'vertical'
-  direction: 'vertical'
+  direction: 'vertical',
+  // 指定扫描样式，默认是true（全部）
+  scanStyles: true,
 }
 
 // 预览（用于调试）
@@ -43,11 +45,12 @@ print(target, options).then(() => {
 interface Options {
   beforePrint?: (el: HTMLElement, index: number) => void
   direction?: 'vertical' | 'horizontal'
+  scanStyles?: boolean | string[] | 'common'
 }
 
 function print (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>
 
-function preview (source: HTMLElement | HTMLElement[], options: Options = {}): void
+function preview (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>
 ```
 
 - DOM属性:
@@ -67,9 +70,3 @@ function preview (source: HTMLElement | HTMLElement[], options: Options = {}): v
 ## 注意事项
 
 - 所有百分比样式（如`width: 100%`），打印时将会失效（原因是使用`getComputedStyle`），但是你可以使用`data-print-style`来覆盖打印样式。
-
-## 更新日志
-
-- v1.0.0 2018-09-12
-
-  - 发布第一个版本
