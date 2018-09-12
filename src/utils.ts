@@ -7,20 +7,29 @@ export function ensureArray<T> (arr: T | T[]): T[] {
 }
 
 // 获取并设置行列样式
-export function getStyles (element: HTMLElement) {
+export function getStyles (element: HTMLElement, scanStyles: boolean | string[]) {
   const printClass = element.getAttribute('data-print-class')
   if (printClass) element.classList.add(printClass)
 
-  const printStyle = element.getAttribute('data-print-style') || ''
+  const printStyles = element.getAttribute('data-print-style') || ''
 
-  const styles = window.getComputedStyle(element) as any
+  let styles = ''
 
-  let result = Object.keys(styles).reduce((r, key) => {
-    const value = styles.getPropertyValue(styles[key])
-    return value ? r + `${styles[key]}: ${value};` : r
-  }, '') + printStyle
+  if (scanStyles === true) {
+    styles = window.getComputedStyle(element).cssText
+  } else if (Array.isArray(scanStyles)) {
+    const computed = window.getComputedStyle(element)
 
-  return result
+    styles = scanStyles
+      .map((key) => {
+        const value = computed.getPropertyValue(key)
+        return value ? `${key}: ${value};` : ''
+      })
+      .filter(Boolean)
+      .join(' ')
+  }
+
+  return styles + printStyles
 }
 
 const formTags = ['INPUT', 'TEXTAREA', 'SELECT']
@@ -30,8 +39,8 @@ function isSelect (el: HTMLElement): el is HTMLSelectElement {
 }
 
 // 循环获取样式
-export function loopStyles (el: HTMLElement, ignoreTags: string[] = []) {
-  const style = ignoreTags.includes(el.tagName) ? '' : getStyles(el)
+export function loopStyles (el: HTMLElement, scanStyles: boolean | string[], ignoreTags: string[] = []) {
+  const style = ignoreTags.includes(el.tagName) ? '' : getStyles(el, scanStyles)
 
   if (formTags.includes(el.tagName)) {
     const pre = document.createElement('pre')
@@ -48,7 +57,7 @@ export function loopStyles (el: HTMLElement, ignoreTags: string[] = []) {
       const len = children.length
 
       for (let i = 0; i < len; i++) {
-        loopStyles(children[i] as HTMLElement, ignoreTags)
+        loopStyles(children[i] as HTMLElement, scanStyles, ignoreTags)
       }
     }
   }

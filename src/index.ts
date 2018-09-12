@@ -2,14 +2,22 @@ import { ensureArray, loopStyles, noop, resolveImage } from './utils'
 
 const ignoreTags = ['COLGROUP', 'COL']
 
+const commonStyles = [
+  'align-items', 'border', 'border-collapse', 'bottom', 'box-sizing', 'display', 'flex', 'float', 'font-family',
+  'font-size', 'font-weight', 'height', 'justify-content', 'left', 'line-height', 'margin', 'min-height', 'min-width',
+  'overflow', 'padding', 'position', 'right', 'text-align', 'text-overflow', 'top', 'vertical-align', 'white-space',
+  'width', 'word-break', 'word-wrap',
+]
+
 export interface Options {
   beforePrint?: (el: HTMLElement, index: number) => void
   direction?: 'vertical' | 'horizontal'
+  scanStyles?: boolean | string[] | 'common'
 }
 
 export interface PrintFn {
   (source: HTMLElement | HTMLElement[], options?: Options): Promise<void>
-  preview: (source: HTMLElement | HTMLElement[], options: Options) => void
+  preview: (source: HTMLElement | HTMLElement[], options: Options) => Promise<void>
 }
 
 // 生成html
@@ -19,6 +27,11 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
 
   const beforePrint = options.beforePrint || noop
   const direction = options.direction || 'vertical'
+  const scanStyles = options.scanStyles === undefined
+    ? true
+    : options.scanStyles === 'common'
+    ? commonStyles
+    : options.scanStyles
 
   const pages = sources.map((s, i) => {
     const clone = clones[i]
@@ -27,7 +40,7 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
     s.parentNode!.appendChild(clone)
 
     // 获取样式到clone
-    loopStyles(clone, ignoreTags)
+    loopStyles(clone, scanStyles, ignoreTags)
 
     // 预处理
     beforePrint(clone, i)
@@ -53,6 +66,8 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
 export function preview (source: HTMLElement | HTMLElement[], options: Options = {}) {
   const win = window.open()!
   win.window.document.body.innerHTML = generate(source, options)
+
+  return Promise.resolve()
 }
 
 // 打印
