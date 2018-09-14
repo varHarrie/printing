@@ -1,4 +1,4 @@
-import { ensureArray, loopStyles, noop, resolveImage } from './utils'
+import { ensureArray, injectStyles, loopStyles, noop, resolveImage, Style } from './utils'
 
 const ignoreTags = ['COLGROUP', 'COL']
 
@@ -10,9 +10,11 @@ const commonStyles = [
 ]
 
 export interface Options {
-  beforePrint?: (el: HTMLElement, index: number) => void
+  beforePrint?: (window: Window) => void
   direction?: 'vertical' | 'horizontal'
   scanStyles?: boolean | string[] | 'common'
+  css?: string
+  injectGlobalCss?: boolean
 }
 
 export interface PrintFn {
@@ -25,7 +27,6 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
   const sources = ensureArray(source).filter((s) => s && s.parentNode)
   const clones = sources.map((s) => s.cloneNode(true) as HTMLElement)
 
-  const beforePrint = options.beforePrint || noop
   const direction = options.direction || 'vertical'
   const scanStyles = options.scanStyles === undefined
     ? true
@@ -42,30 +43,56 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
     // 获取样式到clone
     loopStyles(clone, scanStyles, ignoreTags)
 
-    // 预处理
-    beforePrint(clone, i)
-
     // 移除克隆dom
     s.parentNode!.removeChild(clone)
 
     return clone.outerHTML
   })
 
+  let styles: Style[] = []
+
+  // 全局css
+  if (options.injectGlobalCss) {
+    const styleSheets = Array.from(document.styleSheets)
+
+    const content = styleSheets.map((sheet: any) => {
+      const title = `\n/* ${sheet.href || 'anonymous'} */\n`
+      const rules: CSSRule[] = Array.from(sheet.cssRules || sheet.rules || [])
+
+      return title + rules.map((rule) => rule.cssText).join('\n')
+    }).join('\n')
+
+    styles.push({ content })
+  }
+
   // 纸张方向
-  const directionStyle = direction === 'horizontal'
-  ? '<style type="text/css" media="print">@page { size: landscape; }</style>'
-  : ''
+  if (direction === 'horizontal') {
+    styles.push({ content: '@page { size: landscape; }', media: 'print' })
+  }
+
+  // 注入css
+  if (options.css) {
+    styles.push({ content: options.css })
+  }
 
   // 连接分页符
   const pageBreak = '<div style="page-break-after: always;"></div>'
+  const body = pages.join(pageBreak)
 
-  return directionStyle + pages.join(pageBreak)
+  return { styles, body }
 }
 
 // 预览
 export function preview (source: HTMLElement | HTMLElement[], options: Options = {}) {
   const win = window.open()!
-  win.window.document.body.innerHTML = generate(source, options)
+  const { styles, body } = generate(source, options)
+
+  injectStyles(win, styles)
+  win.document.body.innerHTML = body
+
+  // 打印前处理
+  const beforePrint = options.beforePrint || noop
+  beforePrint(win)
 
   return Promise.resolve()
 }
@@ -79,13 +106,20 @@ export async function print (source: HTMLElement | HTMLElement[], options: Optio
   iframe.style.overflow = 'hidden'
   document.body.appendChild(iframe)
 
-  const iframeDocument = iframe.contentDocument!
   const iframeWindow = iframe.contentWindow!
-  iframeDocument.body.innerHTML = generate(source, options)
+  const iframeDocument = iframe.contentDocument!
+  const { styles, body } = generate(source, options)
+
+  injectStyles(iframeWindow, styles)
+  iframeDocument.body.innerHTML = body
 
   // 等待图片加载完成
   const images: HTMLImageElement[] = Array.from(iframeDocument.querySelectorAll('img[src]'))
   await Promise.all(images.map((img) => resolveImage(img)))
+
+  // 打印前处理
+  const beforePrint = options.beforePrint || noop
+  beforePrint(iframeWindow)
 
   iframeWindow.print()
   document.body.removeChild(iframe)

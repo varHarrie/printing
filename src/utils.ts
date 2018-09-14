@@ -1,5 +1,5 @@
 // 空函数
-export function noop (...args: any[]) {/* */}
+export function noop (...args: any[]) {/* empty */}
 
 // 保证是数组
 export function ensureArray<T> (arr: T | T[]): T[] {
@@ -61,6 +61,27 @@ export function loopStyles (el: HTMLElement, scanStyles: boolean | string[], ign
       }
     }
   }
+}
+
+export interface Style {
+  content: string
+  media?: string
+}
+
+// 插入样式
+export function injectStyles (win: Window, styles: Style[]) {
+  const doc = win.document
+  const head = doc.head || doc.querySelector('head')
+
+  styles.forEach((style) => {
+    const el = doc.createElement('style')
+    el.type = 'text/css'
+    el.innerHTML = style.content
+
+    if (style.media) el.media = style.media
+
+    head.appendChild(el)
+  })
 }
 
 // 等待img标签加载
