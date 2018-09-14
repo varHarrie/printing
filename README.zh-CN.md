@@ -26,6 +26,10 @@ const options = {
   direction: 'vertical',
   // 指定扫描样式，默认是true（全部）
   scanStyles: true,
+  // 注入css样式，默认是''
+  css: '',
+  // 插入所有link和style标签到打印，默认是false
+  injectGlobalCss: false,
 }
 
 // 预览（用于调试）
@@ -43,9 +47,11 @@ print(target, options).then(() => {
 
 ```typescript
 interface Options {
-  beforePrint?: (el: HTMLElement, index: number) => void
+  beforePrint?: (window: Window) => void
   direction?: 'vertical' | 'horizontal'
   scanStyles?: boolean | string[] | 'common'
+  css?: string
+  injectGlobalCss?: boolean
 }
 
 function print (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>

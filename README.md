@@ -23,11 +23,15 @@ const target document.getElementById('target')
 
 const options = {
   // modify DOM before print
-  beforePrint (el, index) {},
+  beforePrint (window) {},
   // paper direction, default is 'vertical'
   direction: 'vertical',
   // scan and apply specified styles, default is true (all styles)
   scanStyles: true,
+  // inject css, default is ''
+  css: '',
+  // inject all links and styles from source page, default is false
+  injectGlobalCss: false,
 }
 
 // preview without print (for debug)
@@ -45,9 +49,11 @@ print(target, options).then(() => {
 
 ```typescript
 interface Options {
-  beforePrint?: (el: HTMLElement, index: number) => void
+  beforePrint?: (window: Window) => void
   direction?: 'vertical' | 'horizontal'
   scanStyles?: boolean | string[] | 'common'
+  css?: string
+  injectGlobalCss?: boolean
 }
 
 function print (source: HTMLElement | HTMLElement[], options: Options = {}): Promise<void>
