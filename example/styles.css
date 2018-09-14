@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+table {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
