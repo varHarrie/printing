@@ -1,4 +1,4 @@
-import { ensureArray, injectStyles, loopStyles, noop, resolveImage, Style } from './utils'
+import { ensureArray, injectStyles, loopStyles, noop, resolveImage, Style, timeEnd, timeStart } from './utils'
 
 const ignoreTags = ['COLGROUP', 'COL']
 
@@ -15,6 +15,7 @@ export interface Options {
   scanStyles?: boolean | string[] | 'common'
   css?: string
   injectGlobalCss?: boolean
+  log?: boolean
 }
 
 export interface PrintFn {
@@ -24,6 +25,8 @@ export interface PrintFn {
 
 // 生成html
 export function generate (source: HTMLElement | HTMLElement[], options: Options = {}) {
+  if (options.log) timeStart()
+
   const sources = ensureArray(source).filter((s) => s && s.parentNode)
   const clones = sources.map((s) => s.cloneNode(true) as HTMLElement)
 
@@ -79,11 +82,13 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
   const pageBreak = '<div style="page-break-after: always;"></div>'
   const body = pages.join(pageBreak)
 
+  if (options.log) timeEnd()
+
   return { styles, body }
 }
 
 // 预览
-export function preview (source: HTMLElement | HTMLElement[], options: Options = {}) {
+export async function preview (source: HTMLElement | HTMLElement[], options: Options = {}) {
   const win = window.open()!
   const { styles, body } = generate(source, options)
 
@@ -93,8 +98,6 @@ export function preview (source: HTMLElement | HTMLElement[], options: Options =
   // 打印前处理
   const beforePrint = options.beforePrint || noop
   beforePrint(win)
-
-  return Promise.resolve()
 }
 
 // 打印
@@ -113,13 +116,13 @@ export async function print (source: HTMLElement | HTMLElement[], options: Optio
   injectStyles(iframeWindow, styles)
   iframeDocument.body.innerHTML = body
 
-  // 等待图片加载完成
-  const images: HTMLImageElement[] = Array.from(iframeDocument.querySelectorAll('img[src]'))
-  await Promise.all(images.map((img) => resolveImage(img)))
-
   // 打印前处理
   const beforePrint = options.beforePrint || noop
   beforePrint(iframeWindow)
+
+  // 等待图片加载完成
+  const images: HTMLImageElement[] = Array.from(iframeDocument.querySelectorAll('img[src]'))
+  await Promise.all(images.map((img) => resolveImage(img)))
 
   iframeWindow.print()
   document.body.removeChild(iframe)

@@ -1,3 +1,17 @@
+declare const process: any
+
+let time: number = 0
+
+// 计时开始
+export function timeStart () {
+  time = Date.now()
+}
+
+// 计时结束
+export function timeEnd () {
+  console.log(Date.now() - time + 'ms')
+}
+
 // 空函数
 export function noop (...args: any[]) {/* empty */}
 
@@ -46,11 +60,13 @@ export function loopStyles (el: HTMLElement, scanStyles: boolean | string[], ign
     const pre = document.createElement('pre')
 
     pre.innerHTML = isSelect(el) ? el.options[el.selectedIndex].text : (el as HTMLInputElement).value
-    pre.setAttribute('style', style)
+    pre.className = el.className
+
+    if (style) pre.setAttribute('style', style)
 
     el.parentNode!.replaceChild(pre, el)
   } else {
-    el.setAttribute('style', style)
+    if (style) el.setAttribute('style', style)
 
     if (el.children && el.children.length) {
       const children = el.children
@@ -87,11 +103,12 @@ export function injectStyles (win: Window, styles: Style[]) {
 // 等待img标签加载
 export function resolveImage (img: HTMLImageElement) {
   return new Promise((resolve) => {
-    if (img.getAttribute('src')) {
+    const src = img.getAttribute('src')
+    if (!src || src.startsWith('data:image')) {
+      resolve()
+    } else {
       img.onerror = () => resolve()
       img.onload = () => resolve()
-    } else {
-      resolve()
     }
   })
 }
