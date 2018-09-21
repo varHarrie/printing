@@ -31,11 +31,9 @@ export function generate (source: HTMLElement | HTMLElement[], options: Options 
   const clones = sources.map((s) => s.cloneNode(true) as HTMLElement)
 
   const direction = options.direction || 'vertical'
-  const scanStyles = options.scanStyles === undefined
-    ? true
-    : options.scanStyles === 'common'
+  const scanStyles = options.scanStyles === 'common'
     ? commonStyles
-    : options.scanStyles
+    : options.scanStyles || false
 
   const pages = sources.map((s, i) => {
     const clone = clones[i]
