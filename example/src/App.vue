@@ -6,7 +6,7 @@
     </div>
     <div class="paper" ref="print" data-print-style="width: 100%">
       <img class="logo" src="./logo.png"/>
-      <div class="title">Table</div>
+      <div class="title" data-print-style="width: 100%">Table</div>
       <table data-print-style="width: 100%">
         <thead>
           <tr>
@@ -29,7 +29,9 @@
         </thead>
         <tbody>
           <tr v-for="(row, rowIndex) of rows" :key="rowIndex">
-            <td v-for="(col, colIndex) of row" :key="colIndex">{{col}}</td>
+            <td v-for="(col, colIndex) of row" :key="colIndex">
+              <textarea class="text" :value="col"></textarea>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -47,14 +49,14 @@
       }
     },
     mounted () {
-      const rows = Array.from({length: 200}).map(() => {
+      const rows = Array.from({length: 30}).map(() => {
         return Array.from({length: 8}).map((_, i) => i.toString().repeat(Math.random() * 30 + 10))
       })
       this.rows = rows
     },
     methods: {
-      onPrint (target, enable) {
-        const options = enable ? {injectGlobalCss: true, scanStyles: false} : {injectGlobalCss: false, scanStyles: true}
+      onPrint (target, globalCss) {
+        const options = globalCss ? {injectGlobalCss: true} : {scanStyles: true}
         print(this.$refs[target], options)
       }
     }
@@ -95,5 +97,14 @@
   td {
     white-space: inherit;
     word-break: break-all;
+  }
+
+  .text {
+    padding: 6px;
+    width: 100%;
+    height: 100%;
+    border: none;
+    resize: none;
+    outline: none;
   }
 </style>
