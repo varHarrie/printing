@@ -54,7 +54,7 @@ function isSelect (el: HTMLElement): el is HTMLSelectElement {
 
 // 循环获取样式
 export function loopStyles (el: HTMLElement, scanStyles: boolean | string[], ignoreTags: string[] = []) {
-  const style = ignoreTags.includes(el.tagName) ? '' : getStyles(el, scanStyles)
+  let style = ignoreTags.includes(el.tagName) ? '' : getStyles(el, scanStyles)
 
   if (formTags.includes(el.tagName)) {
     const pre = document.createElement('pre')
@@ -62,6 +62,10 @@ export function loopStyles (el: HTMLElement, scanStyles: boolean | string[], ign
     pre.innerHTML = isSelect(el) ? el.options[el.selectedIndex].text : (el as HTMLInputElement).value
     pre.className = el.className
 
+    const dataset = el.dataset
+    Object.keys(dataset).forEach((key) => pre.dataset[key] = dataset[key])
+
+    if (el.tagName === 'TEXTAREA') style = 'word-break: break-all; white-space: pre-wrap;' + style
     if (style) pre.setAttribute('style', style)
 
     el.parentNode!.replaceChild(pre, el)
